@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ankush-web-eng/brolang/lexer"
+	"github.com/ankush-web-eng/brolang/parser"
 )
 
 func main() {
@@ -14,8 +15,9 @@ func main() {
 		fmt.Print(">> ")
 		input, _ := reader.ReadString('\n')
 		l := lexer.New(input)
-		for tok := l.NextToken(); tok.Type != lexer.EOF; tok = l.NextToken() {
-			fmt.Printf("%+v\n", tok)
-		}
+		p := parser.New(l)
+
+		ast := p.ParseExpression()
+		fmt.Printf("AST: %+v\n", ast)
 	}
 }
