@@ -1,30 +1,24 @@
 package lexer
 
-import (
-	"unicode"
-)
-
 type TokenType string
+
+const (
+	EOF     = "EOF"
+	INT     = "INT"
+	PLUS    = "+"
+	UNKNOWN = "UNKNOWN"
+)
 
 type Token struct {
 	Type    TokenType
 	Literal string
 }
 
-const (
-	EOF       = "EOF"
-	IDENT     = "IDENT"
-	INT       = "INT"
-	ASSIGN    = "="
-	PLUS      = "+"
-	SEMICOLON = ";"
-)
-
 type Lexer struct {
 	input        string
-	position     int
-	readPosition int
-	ch           byte
+	position     int  // current position in input (points to current char)
+	readPosition int  // current reading position (after current char)
+	ch           byte // current char under examination
 }
 
 func New(input string) *Lexer {
@@ -35,7 +29,7 @@ func New(input string) *Lexer {
 
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
-		l.ch = 0 // End of file
+		l.ch = 0 // EOF
 	} else {
 		l.ch = l.input[l.readPosition]
 	}
@@ -43,58 +37,30 @@ func (l *Lexer) readChar() {
 	l.readPosition++
 }
 
-// NextToken moves through the input and returns the next token.
 func (l *Lexer) NextToken() Token {
 	var tok Token
+
 	switch l.ch {
-	case '=':
-		tok = newToken(ASSIGN, l.ch)
 	case '+':
-		tok = newToken(PLUS, l.ch)
-	case ';':
-		tok = newToken(SEMICOLON, l.ch)
+		tok = Token{Type: PLUS, Literal: string(l.ch)}
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		tok.Literal = l.readNumber()
+		tok.Type = INT
 	case 0:
 		tok.Literal = ""
 		tok.Type = EOF
 	default:
-		if isLetter(l.ch) {
-			tok.Literal = l.readIdentifier()
-			tok.Type = IDENT
-			return tok
-		} else if isDigit(l.ch) {
-			tok.Literal = l.readNumber()
-			tok.Type = INT
-			return tok
-		}
+		tok = Token{Type: UNKNOWN, Literal: string(l.ch)}
 	}
+
 	l.readChar()
 	return tok
 }
 
-func (l *Lexer) readIdentifier() string {
-	position := l.position
-	for isLetter(l.ch) {
-		l.readChar()
-	}
-	return l.input[position:l.position]
-}
-
 func (l *Lexer) readNumber() string {
 	position := l.position
-	for isDigit(l.ch) {
+	for l.ch >= '0' && l.ch <= '9' {
 		l.readChar()
 	}
 	return l.input[position:l.position]
-}
-
-func isLetter(ch byte) bool {
-	return unicode.IsLetter(rune(ch))
-}
-
-func isDigit(ch byte) bool {
-	return unicode.IsDigit(rune(ch))
-}
-
-func newToken(tokenType TokenType, ch byte) Token {
-	return Token{Type: tokenType, Literal: string(ch)}
 }

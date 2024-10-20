@@ -39,11 +39,12 @@ func (p *Parser) nextToken() {
 func (p *Parser) ParseExpression() ASTNode {
 	left := p.parsePrimary() // parse the left operand
 
-	for p.curToken.Type == lexer.PLUS || p.curToken.Type == lexer.ASSIGN {
+	// Look for an operator like '+' after the left operand
+	if p.curToken.Type == lexer.PLUS {
 		operator := p.curToken
 		p.nextToken()
 		right := p.parsePrimary() // parse the right operand
-		left = &BinaryExpression{Left: left, Operator: operator, Right: right}
+		return &BinaryExpression{Left: left, Operator: operator, Right: right}
 	}
 
 	return left
