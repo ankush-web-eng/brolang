@@ -6,8 +6,16 @@ import (
 
 	"github.com/ankush-web-eng/brolang/evaluator"
 	"github.com/ankush-web-eng/brolang/lexer"
+	"github.com/ankush-web-eng/brolang/object"
 	"github.com/ankush-web-eng/brolang/parser"
 )
+
+var globalEnv *object.Environment
+
+// SetGlobalEnvironment sets the global environment.
+func SetGlobalEnvironment(env *object.Environment) {
+	globalEnv = env
+}
 
 type CompileRequest struct {
 	Code string `json:"code"`
@@ -36,13 +44,16 @@ func CompilerHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(p.Errors()) > 0 {
 		response := CompileResponse{
-			Error: "bhadwe kya coder banega tu, semicolon bhool gaya!!!",
+			Error: "bhadwe kya coder banega tu, semicolon bhool gaya!!! Pehle step m hu hag diya",
 		}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	result := evaluator.Eval(program)
+	// Initialize a global environment
+	env := object.NewEnvironment()
+
+	result := evaluator.Eval(program, env)
 	if result.Type() == "ERROR" {
 		response := CompileResponse{
 			Error: result.Inspect(),

@@ -1,17 +1,15 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/ankush-web-eng/brolang/api/handler"
+	"github.com/ankush-web-eng/brolang/object"
 )
 
 func main() {
+	env := object.NewEnvironment()
+	handler.SetGlobalEnvironment(env)
 	http.HandleFunc("/compile", handler.CompilerHandler)
-
-	log.Println("Server starting on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal(err)
-	}
+	http.ListenAndServe(":8080", nil)
 }

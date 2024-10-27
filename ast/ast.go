@@ -158,3 +158,12 @@ type CallExpression struct {
 
 func (ce *CallExpression) expressionNode()      {}
 func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
+
+type PrintStatement struct {
+	Token      token.Token
+	Expression Expression
+}
+
+func (ps *PrintStatement) TokenLiteral() string {
+	return ps.Token.Literal
+}

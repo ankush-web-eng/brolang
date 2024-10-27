@@ -30,6 +30,7 @@ func New(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) nextToken() {
+	fmt.Printf("Current token: %s (%s)\n", p.curToken.Type, p.curToken.Literal)
 	p.curToken = p.peekToken
 	p.peekToken = p.l.NextToken()
 }
@@ -44,8 +45,9 @@ func (p *Parser) ParseProgram() *ast.Program {
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
 		}
-		if !p.expectPeek(token.SEMICOLON) {
-			p.errors = append(p.errors, "bhadwe kya coder Banega tu, semicolon bhool gaya!!!")
+
+		if p.peekTokenIs(token.SEMICOLON) {
+			p.nextToken()
 		}
 		p.nextToken()
 	}
@@ -281,8 +283,35 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 }
 
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
-	exp := &ast.CallExpression{Token: p.curToken, Function: function}
-	exp.Arguments = p.parseExpressionList(token.RPAREN)
+	exp := &ast.CallExpression{
+		Token:    p.curToken,
+		Function: function,
+	}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken()
+	exp.Arguments = []ast.Expression{}
+
+	if p.curTokenIs(token.RPAREN) {
+		p.nextToken()
+		return exp
+	}
+
+	exp.Arguments = append(exp.Arguments, p.parseExpression())
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		exp.Arguments = append(exp.Arguments, p.parseExpression())
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
 	return exp
 }
 
