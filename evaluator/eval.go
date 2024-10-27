@@ -44,6 +44,16 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Boolean{Value: node.Value}
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
+	case *ast.InfixExpression:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+		right := Eval(node.Right, env)
+		if isError(right) {
+			return right
+		}
+		return evalInfixExpression(node.Operator, left, right)
 	default:
 		return newError("unknown node type: %T", node)
 	}
@@ -188,7 +198,39 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 	return newError("identifier not found: %s", node.Value)
 }
 
+func evalInfixExpression(operator string, left, right object.Object) object.Object {
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntegerInfixExpression(operator, left, right)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
+}
+
+func evalIntegerInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.Integer).Value
+	rightVal := right.(*object.Integer).Value
+
+	switch operator {
+	case "+":
+		return &object.Integer{Value: leftVal + rightVal}
+	case "-":
+		return &object.Integer{Value: leftVal - rightVal}
+	case "*":
+		return &object.Integer{Value: leftVal * rightVal}
+	case "/":
+		if rightVal == 0 {
+			return newError("division by zero")
+		}
+		return &object.Integer{Value: leftVal / rightVal}
+	default:
+		return newError("unknown operator: %s", operator)
+	}
+}
+
 // Helper functions for error handling and truthiness.
+
 func isError(obj object.Object) bool {
 	if obj == nil {
 		return false

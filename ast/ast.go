@@ -139,6 +139,9 @@ type InfixExpression struct {
 
 func (ie *InfixExpression) expressionNode()      {}
 func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *InfixExpression) String() string {
+	return fmt.Sprintf("(%s %s %s)", ie.Left, ie.Operator, ie.Right)
+}
 
 type BlockStatement struct {
 	Token      token.Token
