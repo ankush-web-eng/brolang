@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/ankush-web-eng/brolang/ast"
 	"github.com/ankush-web-eng/brolang/object"
@@ -23,6 +24,18 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalBlockStatement(node, env)
 	case *ast.PrintStatement:
 		return evalPrintStatement(node, env)
+	case *ast.CallExpression:
+		if node.Function.TokenLiteral() == "bol_bhai" {
+			args := evalExpressions(node.Arguments, env)
+			if len(args) == 1 && isError(args[0]) {
+				return args[0]
+			}
+			for _, arg := range args {
+				fmt.Println(arg.Inspect())
+			}
+			return NULL
+		}
+		return newError("unknown function: %s", node.Function.TokenLiteral())
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.StringLiteral:
@@ -46,25 +59,42 @@ func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
 	for _, stmt := range program.Statements {
 		if stmt == nil {
-			return newError("statement is nil")
+			log.Printf("Warning: nil statement encountered")
+			continue
 		}
 
-		fmt.Printf("Evaluating statement: %+v\n", stmt) // Log the statement
+		fmt.Printf("Evaluating statement: %+v\n", stmt)
 		result = Eval(stmt, env)
+
+		if result == nil {
+			log.Printf("Warning: statement evaluation returned nil")
+			continue
+		}
+
 		if result.Type() == object.ERROR_OBJ {
 			return result
 		}
+	}
+
+	if result == nil {
+		return NULL
 	}
 	return result
 }
 
 func evalLetStatement(ls *ast.LetStatement, env *object.Environment) object.Object {
-	value := Eval(ls.Value, env) // Ensure that Eval for the value is not nil
-	if value.Type() == object.ERROR_OBJ {
+	if ls == nil || ls.Value == nil {
+		return newError("invalid let statement")
+	}
+
+	value := Eval(ls.Value, env)
+	if value == nil || value.Type() == object.ERROR_OBJ {
 		return value
 	}
-	env.Set(ls.Name.Value, value) // Ensure 'env' is not nil and 'Set' is implemented correctly
-	return nil                    // Or appropriate return value
+
+	fmt.Printf("Setting variable: %s = %v\n", ls.Name.Value, value.Inspect())
+	env.Set(ls.Name.Value, value)
+	return value // Return the value instead of nil
 }
 
 // evalForExpression evaluates a for expression.
@@ -114,18 +144,44 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 	return result
 }
 
-// evalPrintStatement evaluates a print statement.
 func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.Object {
+	if ps == nil || ps.Expression == nil {
+		return newError("invalid print statement")
+	}
+
 	value := Eval(ps.Expression, env)
-	if isError(value) {
+	if value == nil {
+		return newError("cannot print nil value")
+	}
+
+	if value.Type() == object.ERROR_OBJ {
 		return value
 	}
-	fmt.Println(value.Inspect()) // Print the value
-	return NULL
+
+	fmt.Printf("Output: %s\n", value.Inspect())
+	return value
+}
+
+func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
+	var result []object.Object
+
+	for _, e := range exps {
+		evaluated := Eval(e, env)
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+		result = append(result, evaluated)
+	}
+
+	return result
 }
 
 // evalIdentifier evaluates an identifier to find its value in the environment.
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
+	if node == nil {
+		return newError("nil identifier")
+	}
+
 	if val, ok := env.Get(node.Value); ok {
 		return val
 	}
@@ -134,6 +190,9 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 
 // Helper functions for error handling and truthiness.
 func isError(obj object.Object) bool {
+	if obj == nil {
+		return false
+	}
 	return obj.Type() == object.ERROR_OBJ
 }
 

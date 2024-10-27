@@ -59,6 +59,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.PRINT:
+		return p.parsePrintStatement()
 	case token.IF:
 		return p.parseExpressionStatement()
 	case token.WHILE:
@@ -68,6 +70,28 @@ func (p *Parser) parseStatement() ast.Statement {
 	default:
 		return p.parseExpressionStatement()
 	}
+}
+
+func (p *Parser) parsePrintStatement() *ast.PrintStatement {
+	stmt := &ast.PrintStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken() // move past '('
+
+	stmt.Expression = p.parseExpression()
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {

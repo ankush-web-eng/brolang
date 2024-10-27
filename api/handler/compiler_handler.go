@@ -44,7 +44,7 @@ func CompilerHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(p.Errors()) > 0 {
 		response := CompileResponse{
-			Error: "bhadwe kya coder banega tu, semicolon bhool gaya!!! Pehle step m hu hag diya",
+			Error: "Bhaap ko bhej, tere bas ki nahi hai",
 		}
 		json.NewEncoder(w).Encode(response)
 		return

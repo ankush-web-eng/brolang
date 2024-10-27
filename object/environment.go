@@ -1,5 +1,7 @@
 package object
 
+import "fmt"
+
 // Environment is a structure that holds variable mappings.
 type Environment struct {
 	store map[string]Object
@@ -10,7 +12,6 @@ type Environment struct {
 func NewEnvironment() *Environment {
 	return &Environment{
 		store: make(map[string]Object),
-		outer: nil,
 	}
 }
 
@@ -18,6 +19,7 @@ func NewEnvironment() *Environment {
 func (env *Environment) Get(name string) (Object, bool) {
 	obj, ok := env.store[name]
 	if !ok && env.outer != nil {
+		fmt.Printf("Variable not found: %s\n", name)
 		return env.outer.Get(name)
 	}
 	return obj, ok
@@ -25,6 +27,7 @@ func (env *Environment) Get(name string) (Object, bool) {
 
 // Set assigns a value to a variable in the environment.
 func (env *Environment) Set(name string, val Object) Object {
+	fmt.Printf("Setting variable: %s = %s\n", name, val.Inspect())
 	env.store[name] = val
 	return val
 }

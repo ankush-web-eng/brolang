@@ -1,6 +1,10 @@
 package ast
 
-import "github.com/ankush-web-eng/brolang/token"
+import (
+	"fmt"
+
+	"github.com/ankush-web-eng/brolang/token"
+)
 
 type Node interface {
 	TokenLiteral() string
@@ -25,6 +29,30 @@ func (p *Program) TokenLiteral() string {
 		return p.Statements[0].TokenLiteral()
 	}
 	return ""
+}
+
+type CallExpression struct {
+	Token     token.Token // The '(' token
+	Function  Expression  // Identifier or FunctionLiteral
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode()      {}
+func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
+func (ce *CallExpression) String() string       { return "CallExpression" }
+
+type PrintStatement struct {
+	Token      token.Token // The 'bol_bhai' token
+	Expression Expression
+}
+
+func (ps *PrintStatement) statementNode()       {}
+func (ps *PrintStatement) TokenLiteral() string { return ps.Token.Literal }
+func (ps *PrintStatement) String() string {
+	if ps.Expression != nil {
+		return fmt.Sprintf("bol_bhai(%s)", ps.Expression)
+	}
+	return "bol_bhai()"
 }
 
 type LetStatement struct {
@@ -149,21 +177,3 @@ type ForExpression struct {
 
 func (fe *ForExpression) expressionNode()      {}
 func (fe *ForExpression) TokenLiteral() string { return fe.Token.Literal }
-
-type CallExpression struct {
-	Token     token.Token
-	Function  Expression
-	Arguments []Expression
-}
-
-func (ce *CallExpression) expressionNode()      {}
-func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
-
-type PrintStatement struct {
-	Token      token.Token
-	Expression Expression
-}
-
-func (ps *PrintStatement) TokenLiteral() string {
-	return ps.Token.Literal
-}
