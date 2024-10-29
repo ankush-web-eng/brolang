@@ -195,7 +195,7 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 	if val, ok := env.Get(node.Value); ok {
 		return val
 	}
-	return newError("identifier not found: %s", node.Value)
+	return newError("Abe hosh me rehle! %s kaha likha h tune bataiyo zara...", node.Value)
 }
 
 func evalInfixExpression(operator string, left, right object.Object) object.Object {

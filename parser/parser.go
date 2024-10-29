@@ -101,29 +101,42 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseExpression() ast.Expression {
+	var leftExp ast.Expression
+
+	// Parse left-hand side of the expression
 	switch p.curToken.Type {
 	case token.INT:
-		return p.parseIntegerLiteral()
+		leftExp = p.parseIntegerLiteral()
 	case token.STRING:
-		return p.parseStringLiteral()
+		leftExp = p.parseStringLiteral()
 	case token.TRUE, token.FALSE:
-		return p.parseBoolean()
+		leftExp = p.parseBoolean()
 	case token.IDENT:
 		if p.peekTokenIs(token.LPAREN) {
-			return p.parseCallExpression(p.parseIdentifier())
+			leftExp = p.parseCallExpression(p.parseIdentifier())
+		} else {
+			leftExp = p.parseIdentifier()
 		}
-		return p.parseIdentifier()
 	case token.LBRACKET:
-		return p.parseArrayLiteral()
+		leftExp = p.parseArrayLiteral()
 	case token.IF:
-		return p.parseIfExpression()
+		leftExp = p.parseIfExpression()
 	case token.WHILE:
-		return p.parseWhileExpression()
+		leftExp = p.parseWhileExpression()
 	case token.FOR:
-		return p.parseForExpression()
+		leftExp = p.parseForExpression()
 	default:
 		return nil
 	}
+
+	// If the next token is an infix operator, parse it as an infix expression
+	for p.peekTokenIs(token.PLUS) || p.peekTokenIs(token.MINUS) ||
+		p.peekTokenIs(token.ASTERISK) || p.peekTokenIs(token.SLASH) {
+		p.nextToken() // Move to the operator
+		leftExp = p.parseInfixExpression(leftExp)
+	}
+
+	return leftExp
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
