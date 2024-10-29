@@ -44,6 +44,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.Boolean{Value: node.Value}
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
+	case *ast.AssignStatement:
+		return evalAssignStatement(node, env)
 	case *ast.InfixExpression:
 		left := Eval(node.Left, env)
 		if isError(left) {
@@ -105,6 +107,23 @@ func evalLetStatement(ls *ast.LetStatement, env *object.Environment) object.Obje
 	fmt.Printf("Setting variable: %s = %v\n", ls.Name.Value, value.Inspect())
 	env.Set(ls.Name.Value, value)
 	return value // Return the value instead of nil
+}
+
+func evalAssignStatement(stmt *ast.AssignStatement, env *object.Environment) object.Object {
+	val := Eval(stmt.Value, env)
+	if isError(val) {
+		return val
+	}
+
+	// Check if the variable already exists in the environment
+	_, ok := env.Get(stmt.Name.Value)
+	if !ok {
+		return newError("identifier not found: " + stmt.Name.Value)
+	}
+
+	// Update the variable's value
+	env.Set(stmt.Name.Value, val)
+	return val
 }
 
 // evalForExpression evaluates a for expression.
@@ -221,9 +240,11 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
 		if rightVal == 0 {
-			return newError("division by zero")
+			return newError("Zero se divide tere baap dada ne bhi kiya hoga!")
 		}
 		return &object.Integer{Value: leftVal / rightVal}
+	case "%":
+		return &object.Integer{Value: leftVal % rightVal}
 	default:
 		return newError("unknown operator: %s", operator)
 	}

@@ -55,6 +55,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.Token{Type: token.ASTERISK, Literal: string(l.ch)}
 	case '/':
 		tok = token.Token{Type: token.SLASH, Literal: string(l.ch)}
+	case '%':
+		tok = token.Token{Type: token.MOD, Literal: string(l.ch)}
 	case '<':
 		tok = token.Token{Type: token.LT, Literal: string(l.ch)}
 	case '>':

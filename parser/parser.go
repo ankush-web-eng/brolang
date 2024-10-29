@@ -59,6 +59,11 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.IDENT:
+		if p.peekTokenIs(token.ASSIGN) {
+			return p.parseAssignStatement()
+		}
+		return p.parseExpressionStatement()
 	case token.PRINT:
 		return p.parsePrintStatement()
 	case token.IF:
@@ -70,6 +75,27 @@ func (p *Parser) parseStatement() ast.Statement {
 	default:
 		return p.parseExpressionStatement()
 	}
+}
+
+func (p *Parser) parseAssignStatement() *ast.AssignStatement {
+	stmt := &ast.AssignStatement{Token: p.curToken}
+
+	// The variable name (IDENT) is the current token
+	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+
+	// Expect '=' after the identifier
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
+	}
+
+	p.nextToken() // Move to the expression
+	stmt.Value = p.parseExpression()
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
 }
 
 func (p *Parser) parsePrintStatement() *ast.PrintStatement {
@@ -131,7 +157,7 @@ func (p *Parser) parseExpression() ast.Expression {
 
 	// If the next token is an infix operator, parse it as an infix expression
 	for p.peekTokenIs(token.PLUS) || p.peekTokenIs(token.MINUS) ||
-		p.peekTokenIs(token.ASTERISK) || p.peekTokenIs(token.SLASH) {
+		p.peekTokenIs(token.ASTERISK) || p.peekTokenIs(token.SLASH) || p.peekTokenIs(token.MOD) {
 		p.nextToken() // Move to the operator
 		leftExp = p.parseInfixExpression(leftExp)
 	}
