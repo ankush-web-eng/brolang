@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/ankush-web-eng/brolang/evaluator"
@@ -43,6 +44,7 @@ func CompilerHandler(w http.ResponseWriter, r *http.Request) {
 	program := p.ParseProgram()
 
 	if len(p.Errors()) > 0 {
+		fmt.Printf("Parser has %v error:\n", p.Errors())
 		response := CompileResponse{
 			Error: "Bhaap ko bhej, tere bas ki nahi hai",
 		}

@@ -18,6 +18,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.LetStatement:
 		fmt.Printf("Evaluating LetStatement: Name: %s, Value: %+v\n", node.Name.Value, node.Value)
 		return evalLetStatement(node, env)
+	case *ast.IfExpression:
+		return evalIfExpression(node, env)
 	case *ast.ForExpression:
 		return evalForExpression(node, env)
 	case *ast.BlockStatement:
@@ -160,6 +162,24 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 	return NULL
 }
 
+func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
+	condition := Eval(ie.Condition, env)
+	if isError(condition) {
+		return condition
+	}
+
+	// Convert condition to boolean
+	conditionValue := isTruthy(condition)
+
+	if conditionValue {
+		return Eval(ie.Consequence, env)
+	} else if ie.Alternative != nil {
+		return Eval(ie.Alternative, env)
+	}
+
+	return NULL
+}
+
 // evalBlockStatement evaluates a block of statements.
 func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) object.Object {
 	newEnv := object.NewEnvironment() // Create a new environment for block
@@ -222,7 +242,7 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
 	default:
-		return newError("unknown operator: %s %s %s",
+		return newError("type mismatch: %s %s %s",
 			left.Type(), operator, right.Type())
 	}
 }
@@ -239,14 +259,18 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
-		if rightVal == 0 {
-			return newError("Zero se divide tere baap dada ne bhi kiya hoga!")
-		}
 		return &object.Integer{Value: leftVal / rightVal}
-	case "%":
-		return &object.Integer{Value: leftVal % rightVal}
+	case ">":
+		return &object.Boolean{Value: leftVal > rightVal}
+	case "<":
+		return &object.Boolean{Value: leftVal < rightVal}
+	case "==":
+		return &object.Boolean{Value: leftVal == rightVal}
+	case "!=":
+		return &object.Boolean{Value: leftVal != rightVal}
 	default:
-		return newError("unknown operator: %s", operator)
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
 	}
 }
 
@@ -267,6 +291,8 @@ func isTruthy(obj object.Object) bool {
 	switch obj := obj.(type) {
 	case *object.Boolean:
 		return obj.Value
+	case *object.Integer:
+		return obj.Value != 0
 	case *object.Null:
 		return false
 	default:

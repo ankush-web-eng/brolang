@@ -246,23 +246,29 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 func (p *Parser) parseIfExpression() ast.Expression {
 	expression := &ast.IfExpression{Token: p.curToken}
 
+	// Expect opening parenthesis
 	if !p.expectPeek(token.LPAREN) {
 		return nil
 	}
 
-	p.nextToken()
-	expression.Condition = p.parseExpression()
+	p.nextToken() // move past '('
 
+	// Parse the condition (left side of comparison)
+	expression.Condition = p.parseSimpleExpression()
+
+	// Expect closing parenthesis
 	if !p.expectPeek(token.RPAREN) {
 		return nil
 	}
 
+	// Expect opening brace
 	if !p.expectPeek(token.LBRACE) {
 		return nil
 	}
 
 	expression.Consequence = p.parseBlockStatement()
 
+	// Check for else
 	if p.peekTokenIs(token.ELSE) {
 		p.nextToken()
 
@@ -274,6 +280,50 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	}
 
 	return expression
+}
+
+func (p *Parser) parseSimpleExpression() ast.Expression {
+	var left ast.Expression
+
+	// Parse the left side - could be identifier or number
+	if p.curTokenIs(token.INT) {
+		left = p.parseIntegerLiteral()
+	} else if p.curTokenIs(token.IDENT) {
+		left = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	} else {
+		return nil
+	}
+
+	// Save the current token for use in the expression
+	p.nextToken()
+	operator := p.curToken.Literal
+
+	// Check if it's a comparison operator
+	if !p.curTokenIs(token.GT) && !p.curTokenIs(token.LT) &&
+		!p.curTokenIs(token.EQ) && !p.curTokenIs(token.NOT_EQ) {
+		return nil
+	}
+
+	// Move to the right side of the expression
+	p.nextToken()
+
+	// Parse the right side - could be identifier or number
+	var right ast.Expression
+	if p.curTokenIs(token.INT) {
+		right = p.parseIntegerLiteral()
+	} else if p.curTokenIs(token.IDENT) {
+		right = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	} else {
+		return nil
+	}
+
+	// Create and return the comparison expression
+	return &ast.InfixExpression{
+		Token:    p.curToken,
+		Left:     left,
+		Operator: operator,
+		Right:    right,
+	}
 }
 
 func (p *Parser) parseWhileExpression() ast.Expression {
