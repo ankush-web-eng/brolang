@@ -11,12 +11,13 @@ import (
 // Eval evaluates the given AST node in the specified environment.
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
-	case *ast.Program:
-		return evalProgram(node, env)
+
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression, env)
+
+	case *ast.Program:
+		return evalProgram(node, env)
 	case *ast.LetStatement:
-		fmt.Printf("Evaluating LetStatement: Name: %s, Value: %+v\n", node.Name.Value, node.Value)
 		return evalLetStatement(node, env)
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
@@ -26,6 +27,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalBlockStatement(node, env)
 	case *ast.PrintStatement:
 		return evalPrintStatement(node, env)
+
 	case *ast.CallExpression:
 		if node.Function.TokenLiteral() == "bol_bhai" {
 			args := evalExpressions(node.Arguments, env)
@@ -38,16 +40,19 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return NULL
 		}
 		return newError("unknown function: %s", node.Function.TokenLiteral())
+
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
 	case *ast.Boolean:
 		return &object.Boolean{Value: node.Value}
+
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.AssignStatement:
 		return evalAssignStatement(node, env)
+
 	case *ast.InfixExpression:
 		left := Eval(node.Left, env)
 		if isError(left) {
@@ -58,6 +63,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return right
 		}
 		return evalInfixExpression(node.Operator, left, right)
+
 	default:
 		return newError("unknown node type: %T", node)
 	}
@@ -65,7 +71,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	if program == nil {
-		return newError("program is nil")
+		return newError("Kuchh likh to sahi be")
 	}
 
 	fmt.Println("Evaluating program with statements:", program.Statements)
@@ -242,7 +248,7 @@ func evalInfixExpression(operator string, left, right object.Object) object.Obje
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
 	default:
-		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+		return newError("%s, '%s', aur %s ka sambandh nahi ban sakta!!", left.Type(), operator, right.Type())
 	}
 }
 
@@ -274,7 +280,7 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	case ">=":
 		return &object.Boolean{Value: leftVal >= rightVal}
 	default:
-		return newError("unknown operator: %s", operator)
+		return newError("Ye konsa operator h!?!?: %s", operator)
 	}
 }
 

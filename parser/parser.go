@@ -30,7 +30,7 @@ func New(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) nextToken() {
-	fmt.Printf("Current token: %s (%s)\n", p.curToken.Type, p.curToken.Literal)
+	// fmt.Printf("Parsing token: %s (%s)\n", p.curToken.Type, p.curToken.Literal)
 	p.curToken = p.peekToken
 	p.peekToken = p.l.NextToken()
 }
@@ -88,7 +88,7 @@ func (p *Parser) parseAssignStatement() *ast.AssignStatement {
 		return nil
 	}
 
-	p.nextToken() // Move to the expression
+	p.nextToken()
 	stmt.Value = p.parseExpression()
 
 	if p.peekTokenIs(token.SEMICOLON) {
@@ -105,7 +105,7 @@ func (p *Parser) parsePrintStatement() *ast.PrintStatement {
 		return nil
 	}
 
-	p.nextToken() // move past '('
+	p.nextToken() // moving past '('
 
 	stmt.Expression = p.parseExpression()
 
@@ -137,20 +137,23 @@ func (p *Parser) parseExpression() ast.Expression {
 		leftExp = p.parseStringLiteral()
 	case token.TRUE, token.FALSE:
 		leftExp = p.parseBoolean()
-	case token.IDENT:
-		if p.peekTokenIs(token.LPAREN) {
-			leftExp = p.parseCallExpression(p.parseIdentifier())
-		} else {
-			leftExp = p.parseIdentifier()
-		}
-	case token.LBRACKET:
-		leftExp = p.parseArrayLiteral()
+
 	case token.IF:
 		leftExp = p.parseIfExpression()
 	case token.WHILE:
 		leftExp = p.parseWhileExpression()
 	case token.FOR:
 		leftExp = p.parseForExpression()
+
+	case token.LBRACKET:
+		leftExp = p.parseArrayLiteral()
+	case token.IDENT:
+		if p.peekTokenIs(token.LPAREN) {
+			leftExp = p.parseCallExpression(p.parseIdentifier())
+		} else {
+			leftExp = p.parseIdentifier()
+		}
+
 	default:
 		return nil
 	}
@@ -439,8 +442,8 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 }
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
-		t, p.peekToken.Type)
+	msg := fmt.Sprintf("Sahi se code likhna bhi nahi aa raha tere se! %s kaha se aa gaya %s se pehle!!!!",
+		p.peekToken.Literal, t)
 	p.errors = append(p.errors, msg)
 }
 

@@ -49,7 +49,7 @@ const (
 	INPUT = "suna_bhai"
 	IF    = "agar"
 	ELSE  = "nahi_to"
-	WHILE = "jak_tak"
+	WHILE = "jaha_tak"
 	FOR   = "shuru_kar"
 	TRUE  = "sach"
 	FALSE = "jhuth"
@@ -61,7 +61,7 @@ var keywords = map[string]TokenType{
 	"suna_bhai": INPUT,
 	"agar":      IF,
 	"nahi_to":   ELSE,
-	"jak_tak":   WHILE,
+	"jaha_tak":  WHILE,
 	"shuru_kar": FOR,
 	"sach":      TRUE,
 	"jhuth":     FALSE,

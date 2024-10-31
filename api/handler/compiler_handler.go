@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ankush-web-eng/brolang/evaluator"
 	"github.com/ankush-web-eng/brolang/lexer"
@@ -39,23 +40,32 @@ func CompilerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Break the code into small parts and parse it
 	l := lexer.New(req.Code)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
+	// if there are any errors while parsing the code, return the error
+	var customErrors strings.Builder
 	if len(p.Errors()) > 0 {
 		fmt.Printf("Parser has %v error:\n", p.Errors())
+		for _, value := range p.Errors() {
+			customErrors.WriteString(value)
+			customErrors.WriteString(" ")
+		}
 		response := CompileResponse{
-			Error: "Bhaap ko bhej, tere bas ki nahi hai",
+			Error: customErrors.String(),
 		}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 
-	// Initialize a global environment
+	// Initialize a global environment to handle variables
 	env := object.NewEnvironment()
 
+	// Get the evaluated code and return to the client
 	result := evaluator.Eval(program, env)
+
 	if result.Type() == "ERROR" {
 		response := CompileResponse{
 			Error: result.Inspect(),

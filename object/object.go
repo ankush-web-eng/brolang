@@ -77,7 +77,9 @@ func (b *Boolean) HashKey() HashKey {
 type Null struct{}
 
 func (n *Null) Type() ObjectType { return NULL_OBJ }
-func (n *Null) Inspect() string  { return "null" }
+func (n *Null) Inspect() string {
+	return "Hn beta, isi keyboard se ladkiyo k DMs m milta h tu, typing na hori hogi tere se isi keyboard se!!"
+}
 
 type ReturnValue struct {
 	Value Object
@@ -91,7 +93,9 @@ type Error struct {
 }
 
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
-func (e *Error) Inspect() string  { return "ERROR: " + e.Message }
+func (e *Error) Inspect() string {
+	return "Bhai tu coder nahi ban sakta, gadbad kardi tune! kyuki " + e.Message
+}
 
 type Array struct {
 	Elements []Object
