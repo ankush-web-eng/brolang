@@ -39,6 +39,22 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = token.Token{Type: token.ASSIGN, Literal: string(l.ch)}
 		}
+	case '<':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			tok = token.Token{Type: token.LTE, Literal: string(ch) + string(l.ch)}
+		} else {
+			tok = token.Token{Type: token.LT, Literal: string(l.ch)}
+		}
+	case '>':
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			tok = token.Token{Type: token.GTE, Literal: string(ch) + string(l.ch)}
+		} else {
+			tok = token.Token{Type: token.GT, Literal: string(l.ch)}
+		}
 	case ';':
 		tok = token.Token{Type: token.SEMICOLON, Literal: string(l.ch)}
 	case '(':
@@ -57,10 +73,6 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.Token{Type: token.SLASH, Literal: string(l.ch)}
 	case '%':
 		tok = token.Token{Type: token.MOD, Literal: string(l.ch)}
-	case '<':
-		tok = token.Token{Type: token.LT, Literal: string(l.ch)}
-	case '>':
-		tok = token.Token{Type: token.GT, Literal: string(l.ch)}
 	case '[':
 		tok = token.Token{Type: token.LBRACKET, Literal: string(l.ch)}
 	case ']':

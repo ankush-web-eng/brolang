@@ -269,6 +269,10 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 		return &object.Boolean{Value: leftVal == rightVal}
 	case "!=":
 		return &object.Boolean{Value: leftVal != rightVal}
+	case "<=":
+		return &object.Boolean{Value: leftVal <= rightVal}
+	case ">=":
+		return &object.Boolean{Value: leftVal >= rightVal}
 	default:
 		return newError("unknown operator: %s", operator)
 	}
