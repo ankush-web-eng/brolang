@@ -313,8 +313,17 @@ func (p *Parser) parseSimpleExpression() ast.Expression {
 func (p *Parser) parseWhileExpression() ast.Expression {
 	expression := &ast.WhileExpression{Token: p.curToken}
 
-	p.nextToken()
-	expression.Condition = p.parseExpression()
+	// Expect opening parenthesis
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+
+	p.nextToken() // Move ahead to read the expression inside parenthesis
+	expression.Condition = p.parseSimpleExpression()
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
 
 	if !p.expectPeek(token.LBRACE) {
 		return nil

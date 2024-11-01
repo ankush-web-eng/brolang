@@ -122,20 +122,30 @@ func evalLetStatement(ls *ast.LetStatement, env *object.Environment) object.Obje
 }
 
 func evalAssignStatement(stmt *ast.AssignStatement, env *object.Environment) object.Object {
+	// First evaluate the value to be assigned
 	val := Eval(stmt.Value, env)
 	if isError(val) {
 		return val
 	}
 
-	// Check if the variable already exists in the environment
-	_, ok := env.Get(stmt.Name.Value)
-	if !ok {
-		return newError("identifier not found: " + stmt.Name.Value)
+	// Try to set directly in current environment first
+	if _, ok := env.Get(stmt.Name.Value); ok {
+		return env.Set(stmt.Name.Value, val)
 	}
 
-	// Update the variable's value
-	env.Set(stmt.Name.Value, val)
-	return val
+	// If not found in current, explicitly check outer environments
+	if env.Outer != nil {
+		current := env.Outer
+		for current != nil {
+			if _, ok := current.Get(stmt.Name.Value); ok {
+				return current.Set(stmt.Name.Value, val)
+			}
+			current = current.Outer
+		}
+	}
+
+	// If variable doesn't exist anywhere in chain, create it in current environment
+	return env.Set(stmt.Name.Value, val)
 }
 
 func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
@@ -158,17 +168,17 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 
 // evalBlockStatement evaluates a block of statements.
 func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) object.Object {
-	newEnv := object.NewEnvironment() // Create a new environment for block
+	// newEnv := object.NewEnvironment() // Create a new environment for block
 	var result object.Object
 	for _, stmt := range block.Statements {
-		result = Eval(stmt, newEnv)
-		if result != nil {
-			// Add output to environment's OutputBuilder
-			if result.Type() != object.ERROR_OBJ {
-				env.OutputBuilder.WriteString(result.Inspect())
-				env.OutputBuilder.WriteString("\n")
-			}
-		}
+		result = Eval(stmt, env)
+		// if result != nil {
+		// 	// Add output to environment's OutputBuilder
+		// 	if result.Type() != object.ERROR_OBJ {
+		// 		env.OutputBuilder.WriteString(result.Inspect())
+		// 		env.OutputBuilder.WriteString("\n")
+		// 	}
+		// }
 	}
 	return result
 }
@@ -187,10 +197,10 @@ func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.
 		return value
 	}
 
+	// Keep adding the ouput to the Output' Builder string
 	env.OutputBuilder.WriteString(value.Inspect())
 	env.OutputBuilder.WriteString("\n")
 
-	fmt.Printf("Output: %s\n", value.Inspect())
 	return value
 }
 
@@ -230,6 +240,9 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 
 // evaluate while expressions
 func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) object.Object {
+
+	var result object.Object = NULL
+
 	for {
 		condition := Eval(we.Condition, env)
 		if isError(condition) {
@@ -244,8 +257,15 @@ func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) objec
 		if isError(result) {
 			return result
 		}
+
+		// // Add output to result string
+		// if result != nil && result.Type() != object.ERROR_OBJ {
+		// 	env.OutputBuilder.WriteString(result.Inspect())
+		// 	env.OutputBuilder.WriteString("\n")
+		// }
+
 	}
-	return NULL
+	return result
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {

@@ -12,11 +12,11 @@ import (
 	"github.com/ankush-web-eng/brolang/parser"
 )
 
-var globalEnv *object.Environment
+var GlobalEnv *object.Environment
 
 // SetGlobalEnvironment sets the global environment.
 func SetGlobalEnvironment(env *object.Environment) {
-	globalEnv = env
+	GlobalEnv = env
 }
 
 type CompileRequest struct {
@@ -60,7 +60,7 @@ func CompilerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Initialize a global environment to handle variables
+	// Initialize a global environment to hanydle variables
 	env := object.NewEnvironment()
 
 	// Get the evaluated code and return to the client
