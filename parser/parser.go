@@ -341,22 +341,40 @@ func (p *Parser) parseForExpression() ast.Expression {
 		return nil
 	}
 
-	p.nextToken() // Move to initialization
-	expression.Init = p.parseLetStatement()
+	// Parse initialization
+	p.nextToken() // Move past '('
+	if !p.curTokenIs(token.SEMICOLON) {
+		expression.Init = p.parseStatement()
+		if expression.Init == nil {
+			return nil
+		}
+	}
 
 	if !p.expectPeek(token.SEMICOLON) {
 		return nil
 	}
 
-	p.nextToken()                              // Move to condition
-	expression.Condition = p.parseExpression() // Updated here
+	// Parse condition
+	p.nextToken() // Move past semicolon
+	if !p.curTokenIs(token.SEMICOLON) {
+		expression.Condition = p.parseSimpleExpression()
+		if expression.Condition == nil {
+			return nil
+		}
+	}
 
 	if !p.expectPeek(token.SEMICOLON) {
 		return nil
 	}
 
-	p.nextToken() // Move to update
-	expression.Update = p.parseExpressionStatement()
+	// Parse update
+	p.nextToken() // Move past semicolon
+	if !p.curTokenIs(token.RPAREN) {
+		expression.Update = p.parseStatement()
+		if expression.Update == nil {
+			return nil
+		}
+	}
 
 	if !p.expectPeek(token.RPAREN) {
 		return nil

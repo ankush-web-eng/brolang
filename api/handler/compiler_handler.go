@@ -40,6 +40,14 @@ func CompilerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Code == "" {
+		response := CompileResponse{
+			Error: "Kuchh likh to sahi be!",
+		}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	// Break the code into small parts and parse it
 	l := lexer.New(req.Code)
 	p := parser.New(l)

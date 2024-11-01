@@ -2,7 +2,6 @@ package evaluator
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/ankush-web-eng/brolang/ast"
 	"github.com/ankush-web-eng/brolang/object"
@@ -75,27 +74,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	if program == nil {
-		return newError("Kuchh likh to sahi be")
+		return newError("Kuch likh to sahi be!!")
 	}
-
-	fmt.Println("\n\nEvaluating program with statements:", program.Statements)
 
 	var result object.Object
 	for _, stmt := range program.Statements {
-		if stmt == nil {
-			log.Printf("Warning: nil statement encountered")
-			continue
-		}
-
-		fmt.Printf("Evaluating statement: %+v\n", stmt)
 		result = Eval(stmt, env)
-
-		if result == nil {
-			log.Printf("Warning: statement evaluation returned nil")
-			continue
-		}
-
-		if result.Type() == object.ERROR_OBJ {
+		if result != nil && result.Type() == object.ERROR_OBJ {
 			return result
 		}
 	}
@@ -205,37 +190,51 @@ func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.
 }
 
 // evaluates a for expression
+// In eval.go
 func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
+	// Create enclosed environment for loop scope
+	loopEnv := object.NewEnclosedEnvironment(env)
+
+	// Initialize
 	if fe.Init != nil {
-		initVal := Eval(fe.Init, env)
-		if isError(initVal) {
-			return initVal
+		initResult := Eval(fe.Init, loopEnv)
+		if isError(initResult) {
+			return initResult
 		}
 	}
 
+	var result object.Object = NULL
+
 	for {
-		condition := Eval(fe.Condition, env)
-		if isError(condition) {
-			return condition
+		// Check condition
+		if fe.Condition != nil {
+			condition := Eval(fe.Condition, loopEnv)
+			if isError(condition) {
+				return condition
+			}
+			if !isTruthy(condition) {
+				break
+			}
 		}
 
-		if !isTruthy(condition) {
-			break
-		}
-
-		result := Eval(fe.Body, env)
+		// Execute body using the same environment to preserve OutputBuilder
+		result = Eval(fe.Body, loopEnv)
 		if isError(result) {
 			return result
 		}
 
+		// Execute update
 		if fe.Update != nil {
-			updateVal := Eval(fe.Update, env)
-			if isError(updateVal) {
-				return updateVal
+			updateResult := Eval(fe.Update, loopEnv)
+			if isError(updateResult) {
+				return updateResult
 			}
 		}
 	}
-	return NULL
+
+	// Copy accumulated output to parent environment
+	env.OutputBuilder.WriteString(loopEnv.OutputBuilder.String())
+	return result
 }
 
 // evaluate while expressions
