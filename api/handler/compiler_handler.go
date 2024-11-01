@@ -66,16 +66,15 @@ func CompilerHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the evaluated code and return to the client
 	result := evaluator.Eval(program, env)
 
-	if result.Type() == "ERROR" {
-		response := CompileResponse{
-			Error: result.Inspect(),
-		}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
+	// env.OutputBuilder.WriteString(result.Inspect())
 
 	response := CompileResponse{
-		Result: result.Inspect(),
+		Result: env.OutputBuilder.String(), // Use accumulated output
 	}
+
+	if result.Type() == object.ERROR_OBJ {
+		response.Error = result.Inspect()
+	}
+
 	json.NewEncoder(w).Encode(response)
 }

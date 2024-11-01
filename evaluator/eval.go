@@ -162,8 +162,12 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 	var result object.Object
 	for _, stmt := range block.Statements {
 		result = Eval(stmt, newEnv)
-		if isError(result) {
-			return result
+		if result != nil {
+			// Add output to environment's OutputBuilder
+			if result.Type() != object.ERROR_OBJ {
+				env.OutputBuilder.WriteString(result.Inspect())
+				env.OutputBuilder.WriteString("\n")
+			}
 		}
 	}
 	return result
@@ -182,6 +186,9 @@ func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.
 	if value.Type() == object.ERROR_OBJ {
 		return value
 	}
+
+	env.OutputBuilder.WriteString(value.Inspect())
+	env.OutputBuilder.WriteString("\n")
 
 	fmt.Printf("Output: %s\n", value.Inspect())
 	return value

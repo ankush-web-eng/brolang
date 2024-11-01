@@ -1,11 +1,15 @@
 package object
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Environment is a structure that holds variable mappings.
 type Environment struct {
-	store map[string]Object
-	outer *Environment
+	store         map[string]Object
+	outer         *Environment
+	OutputBuilder strings.Builder
 }
 
 // NewEnvironment creates a new Environment instance.
