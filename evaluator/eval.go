@@ -19,10 +19,14 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalProgram(node, env)
 	case *ast.LetStatement:
 		return evalLetStatement(node, env)
+
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
 	case *ast.ForExpression:
 		return evalForExpression(node, env)
+	case *ast.WhileExpression:
+		return evalWhileExpression(node, env)
+
 	case *ast.BlockStatement:
 		return evalBlockStatement(node, env)
 	case *ast.PrintStatement:
@@ -74,7 +78,7 @@ func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 		return newError("Kuchh likh to sahi be")
 	}
 
-	fmt.Println("Evaluating program with statements:", program.Statements)
+	fmt.Println("\n\nEvaluating program with statements:", program.Statements)
 
 	var result object.Object
 	for _, stmt := range program.Statements {
@@ -134,40 +138,6 @@ func evalAssignStatement(stmt *ast.AssignStatement, env *object.Environment) obj
 	return val
 }
 
-// evalForExpression evaluates a for expression.
-func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
-	if fe.Init != nil {
-		initVal := Eval(fe.Init, env)
-		if isError(initVal) {
-			return initVal
-		}
-	}
-
-	for {
-		condition := Eval(fe.Condition, env)
-		if isError(condition) {
-			return condition
-		}
-
-		if !isTruthy(condition) {
-			break
-		}
-
-		result := Eval(fe.Body, env)
-		if isError(result) {
-			return result
-		}
-
-		if fe.Update != nil {
-			updateVal := Eval(fe.Update, env)
-			if isError(updateVal) {
-				return updateVal
-			}
-		}
-	}
-	return NULL
-}
-
 func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
 	condition := Eval(ie.Condition, env)
 	if isError(condition) {
@@ -215,6 +185,60 @@ func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.
 
 	fmt.Printf("Output: %s\n", value.Inspect())
 	return value
+}
+
+// evaluates a for expression
+func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
+	if fe.Init != nil {
+		initVal := Eval(fe.Init, env)
+		if isError(initVal) {
+			return initVal
+		}
+	}
+
+	for {
+		condition := Eval(fe.Condition, env)
+		if isError(condition) {
+			return condition
+		}
+
+		if !isTruthy(condition) {
+			break
+		}
+
+		result := Eval(fe.Body, env)
+		if isError(result) {
+			return result
+		}
+
+		if fe.Update != nil {
+			updateVal := Eval(fe.Update, env)
+			if isError(updateVal) {
+				return updateVal
+			}
+		}
+	}
+	return NULL
+}
+
+// evaluate while expressions
+func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) object.Object {
+	for {
+		condition := Eval(we.Condition, env)
+		if isError(condition) {
+			return condition
+		}
+
+		if !isTruthy(condition) {
+			break
+		}
+
+		result := Eval(we.Body, env)
+		if isError(result) {
+			return result
+		}
+	}
+	return NULL
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {

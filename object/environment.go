@@ -10,9 +10,15 @@ type Environment struct {
 
 // NewEnvironment creates a new Environment instance.
 func NewEnvironment() *Environment {
-	return &Environment{
-		store: make(map[string]Object),
-	}
+	s := make(map[string]Object)
+	return &Environment{store: s, outer: nil}
+}
+
+// enclosed environment for scopes
+func NewEnclosedEnvironment(outer *Environment) *Environment {
+	env := NewEnvironment()
+	env.outer = outer
+	return env
 }
 
 // Get retrieves an object from the environment.
