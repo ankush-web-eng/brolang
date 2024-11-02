@@ -67,6 +67,20 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		}
 		return evalInfixExpression(node.Operator, left, right)
 
+	case *ast.ArrayLiteral:
+		return evalArrayLiteral(node, env)
+
+	case *ast.IndexExpression:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+		index := Eval(node.Index, env)
+		if isError(index) {
+			return index
+		}
+		return evalIndexExpression(left, index)
+
 	default:
 		return newError("unknown node type: %T", node)
 	}
@@ -265,6 +279,53 @@ func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) objec
 
 	}
 	return result
+}
+
+func evalArrayLiteral(node *ast.ArrayLiteral, env *object.Environment) object.Object {
+	elements := evalExpressions(node.Elements, env)
+
+	// Check for errors in elements
+	for _, el := range elements {
+		if isError(el) {
+			return el
+		}
+	}
+
+	// Check type consistency
+	if len(elements) > 0 {
+		firstType := elements[0].Type()
+		for _, el := range elements[1:] {
+			if el.Type() != firstType {
+				return newError("Array elements must be of same type. Expected %s but got %s",
+					firstType, el.Type())
+			}
+		}
+	}
+
+	return &object.Array{Elements: elements}
+}
+
+func evalIndexExpression(left, index object.Object) object.Object {
+	switch {
+	case left.Type() == object.ARRAY_OBJ:
+		return evalArrayIndexExpression(left, index)
+	default:
+		return newError("Index operator not supported: %s", left.Type())
+	}
+}
+
+func evalArrayIndexExpression(array, index object.Object) object.Object {
+	arrayObject := array.(*object.Array)
+	idx, ok := index.(*object.Integer)
+	if !ok {
+		return newError("Array index must be INTEGER, got %s", index.Type())
+	}
+
+	if idx.Value < 0 || idx.Value >= int64(len(arrayObject.Elements)) {
+		return newError("Aukaat m rehle aukaat m, %d index pe kuch nahi hai! Bahar mat jaa array se!!", idx.Value)
+	}
+
+	return arrayObject.Elements[idx.Value]
 }
 
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {

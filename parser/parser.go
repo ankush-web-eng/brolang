@@ -165,6 +165,11 @@ func (p *Parser) parseExpression() ast.Expression {
 		leftExp = p.parseInfixExpression(leftExp)
 	}
 
+	if p.peekTokenIs(token.LBRACKET) {
+		p.nextToken()
+		leftExp = p.parseIndexExpression(leftExp)
+	}
+
 	return leftExp
 }
 
@@ -445,6 +450,19 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+
+	return exp
+}
+
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
+
+	p.nextToken() // Move past '['
+	exp.Index = p.parseExpression()
+
+	if !p.expectPeek(token.RBRACKET) {
 		return nil
 	}
 

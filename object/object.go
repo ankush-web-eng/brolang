@@ -94,7 +94,7 @@ type Error struct {
 
 func (e *Error) Type() ObjectType { return ERROR_OBJ }
 func (e *Error) Inspect() string {
-	return "Bhai tu coder nahi ban sakta, gadbad kardi tune! kyuki " + e.Message
+	return "bhai galati kardi tune " + e.Message
 }
 
 type Array struct {
