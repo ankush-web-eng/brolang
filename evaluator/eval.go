@@ -296,7 +296,7 @@ func evalArrayLiteral(node *ast.ArrayLiteral, env *object.Environment) object.Ob
 		firstType := elements[0].Type()
 		for _, el := range elements[1:] {
 			if el.Type() != firstType {
-				return newError("Array elements must be of same type. Expected %s but got %s",
+				return newError("Girgit mat ban, datatype mat badle array ke elements ka. %s ko %s se saath mix mat kar!!",
 					firstType, el.Type())
 			}
 		}
@@ -318,7 +318,7 @@ func evalArrayIndexExpression(array, index object.Object) object.Object {
 	arrayObject := array.(*object.Array)
 	idx, ok := index.(*object.Integer)
 	if !ok {
-		return newError("Array index must be INTEGER, got %s", index.Type())
+		return newError("Beta tum se nahi ho payega, jao arrays padh ke aao striver sir se! Integer daal be,S %s", index.Type())
 	}
 
 	if idx.Value < 0 || idx.Value >= int64(len(arrayObject.Elements)) {

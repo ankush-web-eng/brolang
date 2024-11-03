@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "golang.go",
+        "ms-vscode.go",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker",
+    ]
+}
