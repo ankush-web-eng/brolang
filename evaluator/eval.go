@@ -153,12 +153,23 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 		return condition
 	}
 
-	// Convert condition to boolean
-	conditionValue := isTruthy(condition)
-
-	if conditionValue {
+	if isTruthy(condition) {
 		return Eval(ie.Consequence, env)
-	} else if ie.Alternative != nil {
+	}
+
+	// Evaluate else-if conditions
+	for _, elseIf := range ie.ElseIf {
+		condition := Eval(elseIf.Condition, env)
+		if isError(condition) {
+			return condition
+		}
+
+		if isTruthy(condition) {
+			return Eval(elseIf.Consequence, env)
+		}
+	}
+
+	if ie.Alternative != nil {
 		return Eval(ie.Alternative, env)
 	}
 
@@ -204,7 +215,6 @@ func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.
 }
 
 // evaluates a for expression
-// In eval.go
 func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
 	// Create enclosed environment for loop scope
 	loopEnv := object.NewEnclosedEnvironment(env)
@@ -231,7 +241,7 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 			}
 		}
 
-		// Execute body using the same environment to preserve OutputBuilder
+		// Execute body using the same environment to preserve variables
 		result = Eval(fe.Body, loopEnv)
 		if isError(result) {
 			return result
@@ -253,11 +263,12 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 
 // evaluate while expressions
 func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) object.Object {
-
+	// Create new environment for loop scope
+	loopEnv := object.NewEnclosedEnvironment(env)
 	var result object.Object = NULL
 
 	for {
-		condition := Eval(we.Condition, env)
+		condition := Eval(we.Condition, loopEnv)
 		if isError(condition) {
 			return condition
 		}
@@ -266,18 +277,14 @@ func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) objec
 			break
 		}
 
-		result := Eval(we.Body, env)
+		result = Eval(we.Body, loopEnv)
 		if isError(result) {
 			return result
 		}
-
-		// // Add output to result string
-		// if result != nil && result.Type() != object.ERROR_OBJ {
-		// 	env.OutputBuilder.WriteString(result.Inspect())
-		// 	env.OutputBuilder.WriteString("\n")
-		// }
-
 	}
+
+	// Copy accumulated output to parent environment
+	env.OutputBuilder.WriteString(loopEnv.OutputBuilder.String())
 	return result
 }
 

@@ -164,6 +164,7 @@ type IfExpression struct {
 	Token       token.Token
 	Condition   Expression
 	Consequence *BlockStatement
+	ElseIf      []*IfExpression
 	Alternative *BlockStatement
 }
 

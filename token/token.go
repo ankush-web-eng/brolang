@@ -44,27 +44,29 @@ const (
 	RBRACKET  = "]"
 
 	// Keywords
-	LET   = "bhai_sun"
-	PRINT = "bol_bhai"
-	INPUT = "suna_bhai"
-	IF    = "agar"
-	ELSE  = "nahi_to"
-	WHILE = "jaha_tak"
-	FOR   = "shuru_kar"
-	TRUE  = "sach"
-	FALSE = "jhuth"
+	LET     = "bhai_sun"
+	PRINT   = "bol_bhai"
+	INPUT   = "suna_bhai"
+	IF      = "agar"
+	ELSE    = "nahi_to"
+	ELSE_IF = "nahi_to_agar"
+	WHILE   = "jaha_tak"
+	FOR     = "chal_bhai"
+	TRUE    = "sach"
+	FALSE   = "jhuth"
 )
 
 var keywords = map[string]TokenType{
-	"bhai_sun":  LET,
-	"bol_bhai":  PRINT,
-	"suna_bhai": INPUT,
-	"agar":      IF,
-	"nahi_to":   ELSE,
-	"jaha_tak":  WHILE,
-	"shuru_kar": FOR,
-	"sach":      TRUE,
-	"jhuth":     FALSE,
+	"bhai_sun":     LET,
+	"bol_bhai":     PRINT,
+	"suna_bhai":    INPUT,
+	"agar":         IF,
+	"nahi_to":      ELSE,
+	"nahi_to_agar": ELSE_IF,
+	"jaha_tak":     WHILE,
+	"chal_bhai":    FOR,
+	"sach":         TRUE,
+	"jhuth":        FALSE,
 }
 
 func LookupIdent(ident string) TokenType {

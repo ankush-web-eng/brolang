@@ -252,13 +252,16 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 }
 
 func (p *Parser) parseIfExpression() ast.Expression {
-	expression := &ast.IfExpression{Token: p.curToken}
+	expression := &ast.IfExpression{
+		Token:  p.curToken,
+		ElseIf: []*ast.IfExpression{},
+	}
 
 	if !p.expectPeek(token.LPAREN) {
 		return nil
 	}
 
-	p.nextToken() // move past '('
+	p.nextToken()
 	expression.Condition = p.parseSimpleExpression()
 
 	if !p.expectPeek(token.RPAREN) {
@@ -271,6 +274,31 @@ func (p *Parser) parseIfExpression() ast.Expression {
 
 	expression.Consequence = p.parseBlockStatement()
 
+	// Parse else-if statements
+	for p.peekTokenIs(token.ELSE_IF) {
+		p.nextToken() // move to ELSE_IF
+		elseIfExp := &ast.IfExpression{Token: p.curToken}
+
+		if !p.expectPeek(token.LPAREN) {
+			return nil
+		}
+
+		p.nextToken()
+		elseIfExp.Condition = p.parseSimpleExpression()
+
+		if !p.expectPeek(token.RPAREN) {
+			return nil
+		}
+
+		if !p.expectPeek(token.LBRACE) {
+			return nil
+		}
+
+		elseIfExp.Consequence = p.parseBlockStatement()
+		expression.ElseIf = append(expression.ElseIf, elseIfExp)
+	}
+
+	// Parse else statement
 	if p.peekTokenIs(token.ELSE) {
 		p.nextToken()
 
@@ -318,12 +346,11 @@ func (p *Parser) parseSimpleExpression() ast.Expression {
 func (p *Parser) parseWhileExpression() ast.Expression {
 	expression := &ast.WhileExpression{Token: p.curToken}
 
-	// Expect opening parenthesis
 	if !p.expectPeek(token.LPAREN) {
 		return nil
 	}
 
-	p.nextToken() // Move ahead to read the expression inside parenthesis
+	p.nextToken()
 	expression.Condition = p.parseSimpleExpression()
 
 	if !p.expectPeek(token.RPAREN) {
@@ -334,6 +361,7 @@ func (p *Parser) parseWhileExpression() ast.Expression {
 		return nil
 	}
 
+	// Create new scope for the loop body
 	expression.Body = p.parseBlockStatement()
 
 	return expression
