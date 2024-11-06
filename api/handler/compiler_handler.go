@@ -12,6 +12,8 @@ import (
 	"github.com/ankush-web-eng/brolang/parser"
 )
 
+// will be upgraded to event based architcture soon
+
 var GlobalEnv *object.Environment
 
 // SetGlobalEnvironment sets the global environment.
