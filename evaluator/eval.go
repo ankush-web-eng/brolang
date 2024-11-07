@@ -25,6 +25,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalForExpression(node, env)
 	case *ast.WhileExpression:
 		return evalWhileExpression(node, env)
+	case *ast.BreakStatement:
+		return evalBreakStatement()
+	case *ast.ContinueStatement:
+		return evalContinueStatement()
 
 	case *ast.BlockStatement:
 		return evalBlockStatement(node, env)
@@ -154,10 +158,15 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 	}
 
 	if isTruthy(condition) {
-		return Eval(ie.Consequence, env)
+		result := Eval(ie.Consequence, env)
+		// Propagate break/continue through if statements
+		if result != nil && (result.Type() == "BREAK" || result.Type() == "CONTINUE") {
+			return result
+		}
+		return result
 	}
 
-	// Evaluate else-if conditions
+	// Handle else-if blocks
 	for _, elseIf := range ie.ElseIf {
 		condition := Eval(elseIf.Condition, env)
 		if isError(condition) {
@@ -165,12 +174,22 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 		}
 
 		if isTruthy(condition) {
-			return Eval(elseIf.Consequence, env)
+			result := Eval(elseIf.Consequence, env)
+			// Propagate break/continue through else-if statements
+			if result != nil && (result.Type() == "BREAK" || result.Type() == "CONTINUE") {
+				return result
+			}
+			return result
 		}
 	}
 
 	if ie.Alternative != nil {
-		return Eval(ie.Alternative, env)
+		result := Eval(ie.Alternative, env)
+		// Propagate break/continue through else statements
+		if result != nil && (result.Type() == "BREAK" || result.Type() == "CONTINUE") {
+			return result
+		}
+		return result
 	}
 
 	return NULL
@@ -189,6 +208,13 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 		// 		env.OutputBuilder.WriteString("\n")
 		// 	}
 		// }
+
+		if result != nil {
+			rt := result.Type()
+			if rt == "BREAK" || rt == "CONTINUE" || rt == object.ERROR_OBJ {
+				return result
+			}
+		}
 	}
 	return result
 }
@@ -214,12 +240,28 @@ func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.
 	return value
 }
 
-// evaluates a for expression
-func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
-	// Create enclosed environment for loop scope
-	loopEnv := object.NewEnclosedEnvironment(env)
+const maxIterations = 10000
 
-	// Initialize
+type LoopControlFlow int
+
+const (
+	LoopNormal LoopControlFlow = iota
+	LoopBreak
+	LoopContinue
+)
+
+func evalBreakStatement() object.Object {
+	return &object.BreakControl{}
+}
+
+func evalContinueStatement() object.Object {
+	return &object.ContinueControl{}
+}
+
+func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
+	loopEnv := object.NewEnclosedEnvironment(env)
+	iterations := 0
+
 	if fe.Init != nil {
 		initResult := Eval(fe.Init, loopEnv)
 		if isError(initResult) {
@@ -230,7 +272,11 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 	var result object.Object = NULL
 
 	for {
-		// Check condition
+		iterations++
+		if iterations > maxIterations {
+			return newError("Infinite loop detected! Check your loop condition.")
+		}
+
 		if fe.Condition != nil {
 			condition := Eval(fe.Condition, loopEnv)
 			if isError(condition) {
@@ -241,13 +287,30 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 			}
 		}
 
-		// Execute body using the same environment to preserve variables
 		result = Eval(fe.Body, loopEnv)
+
+		// Append loopEnv's output to env's output after each iteration
+		env.OutputBuilder.WriteString(loopEnv.OutputBuilder.String())
+		loopEnv.OutputBuilder.Reset()
+
 		if isError(result) {
 			return result
 		}
 
-		// Execute update
+		// Handle break/continue
+		switch result.(type) {
+		case *object.BreakControl:
+			return NULL
+		case *object.ContinueControl:
+			if fe.Update != nil {
+				updateResult := Eval(fe.Update, loopEnv)
+				if isError(updateResult) {
+					return updateResult
+				}
+			}
+			continue
+		}
+
 		if fe.Update != nil {
 			updateResult := Eval(fe.Update, loopEnv)
 			if isError(updateResult) {
@@ -256,18 +319,21 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 		}
 	}
 
-	// Copy accumulated output to parent environment
-	env.OutputBuilder.WriteString(loopEnv.OutputBuilder.String())
 	return result
 }
 
 // evaluate while expressions
 func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) object.Object {
-	// Create new environment for loop scope
 	loopEnv := object.NewEnclosedEnvironment(env)
 	var result object.Object = NULL
+	iterations := 0
 
 	for {
+		iterations++
+		if iterations > maxIterations {
+			return newError("Infinite loop detected! Check your loop condition.")
+		}
+
 		condition := Eval(we.Condition, loopEnv)
 		if isError(condition) {
 			return condition
@@ -278,13 +344,24 @@ func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) objec
 		}
 
 		result = Eval(we.Body, loopEnv)
+
+		// Append loopEnv's output to env's output after each iteration
+		env.OutputBuilder.WriteString(loopEnv.OutputBuilder.String())
+		loopEnv.OutputBuilder.Reset()
+
 		if isError(result) {
 			return result
 		}
+
+		// Handle break/continue
+		switch result.(type) {
+		case *object.BreakControl:
+			return NULL
+		case *object.ContinueControl:
+			continue
+		}
 	}
 
-	// Copy accumulated output to parent environment
-	env.OutputBuilder.WriteString(loopEnv.OutputBuilder.String())
 	return result
 }
 

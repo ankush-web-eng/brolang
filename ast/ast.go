@@ -190,3 +190,17 @@ type ForExpression struct {
 
 func (fe *ForExpression) expressionNode()      {}
 func (fe *ForExpression) TokenLiteral() string { return fe.Token.Literal }
+
+type BreakStatement struct {
+	Token token.Token
+}
+
+func (bs *BreakStatement) statementNode()       {}
+func (bs *BreakStatement) TokenLiteral() string { return bs.Token.Literal }
+
+type ContinueStatement struct {
+	Token token.Token
+}
+
+func (cs *ContinueStatement) statementNode()       {}
+func (cs *ContinueStatement) TokenLiteral() string { return cs.Token.Literal }

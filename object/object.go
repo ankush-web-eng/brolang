@@ -74,6 +74,16 @@ func (b *Boolean) HashKey() HashKey {
 	return HashKey{Type: b.Type(), Value: value}
 }
 
+type BreakControl struct{}
+
+func (b *BreakControl) Type() ObjectType { return "BREAK" }
+func (b *BreakControl) Inspect() string  { return "break" }
+
+type ContinueControl struct{}
+
+func (c *ContinueControl) Type() ObjectType { return "CONTINUE" }
+func (c *ContinueControl) Inspect() string  { return "continue" }
+
 type Null struct{}
 
 func (n *Null) Type() ObjectType { return NULL_OBJ }

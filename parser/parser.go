@@ -72,6 +72,18 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseExpressionStatement()
 	case token.FOR:
 		return p.parseExpressionStatement()
+	case token.BREAK:
+		stmt := &ast.BreakStatement{Token: p.curToken}
+		if p.peekTokenIs(token.SEMICOLON) {
+			p.nextToken()
+		}
+		return stmt
+	case token.CONTINUE:
+		stmt := &ast.ContinueStatement{Token: p.curToken}
+		if p.peekTokenIs(token.SEMICOLON) {
+			p.nextToken()
+		}
+		return stmt
 	default:
 		return p.parseExpressionStatement()
 	}
