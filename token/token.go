@@ -73,6 +73,7 @@ var keywords = map[string]TokenType{
 	"aage_bhad_bhai": CONTINUE,
 }
 
+// LookupIdent checks if the given identifier is a keyword or not
 func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok

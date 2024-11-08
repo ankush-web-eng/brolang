@@ -88,7 +88,7 @@ type Null struct{}
 
 func (n *Null) Type() ObjectType { return NULL_OBJ }
 func (n *Null) Inspect() string {
-	return "Hn beta, isi keyboard se ladkiyo k DMs m milta h tu, typing na hori hogi tere se isi keyboard se!!"
+	return "Hn beta, jis keyboard se ladkiyo k DMs m milta h tu, typing na hori hogi tere se isi keyboard se!!"
 }
 
 type ReturnValue struct {

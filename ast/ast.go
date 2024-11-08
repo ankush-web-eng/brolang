@@ -32,8 +32,8 @@ func (p *Program) TokenLiteral() string {
 }
 
 type CallExpression struct {
-	Token     token.Token // The '(' token
-	Function  Expression  // Identifier or FunctionLiteral
+	Token     token.Token
+	Function  Expression
 	Arguments []Expression
 }
 
@@ -42,16 +42,16 @@ func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
 func (ce *CallExpression) String() string       { return "CallExpression" }
 
 type AssignStatement struct {
-	Token token.Token // The '=' token
-	Name  *Identifier // The variable being reassigned
-	Value Expression  // The new value assigned to the variable
+	Token token.Token
+	Name  *Identifier
+	Value Expression
 }
 
 func (as *AssignStatement) statementNode()       {}
 func (as *AssignStatement) TokenLiteral() string { return as.Token.Literal }
 
 type PrintStatement struct {
-	Token      token.Token // The 'bol_bhai' token
+	Token      token.Token
 	Expression Expression
 }
 

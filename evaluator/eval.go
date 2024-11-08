@@ -46,7 +46,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			}
 			return NULL
 		}
-		return newError("unknown function: %s", node.Function.TokenLiteral())
+		return newError("Ye konsa function h ??: %s", node.Function.TokenLiteral())
 
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
@@ -90,6 +90,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	}
 }
 
+// evalProgram evaluates a program by evaluating each statement in order.
 func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	if program == nil {
 		return newError("Kuch likh to sahi be!!")
@@ -109,6 +110,7 @@ func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	return result
 }
 
+// evaluates a let statement by evaluating the value and setting it in the environment.
 func evalLetStatement(ls *ast.LetStatement, env *object.Environment) object.Object {
 	if ls == nil || ls.Value == nil {
 		return newError("invalid let statement")
@@ -119,11 +121,11 @@ func evalLetStatement(ls *ast.LetStatement, env *object.Environment) object.Obje
 		return value
 	}
 
-	fmt.Printf("Setting variable: %s = %v\n", ls.Name.Value, value.Inspect())
 	env.Set(ls.Name.Value, value)
-	return value // Return the value instead of nil
+	return value
 }
 
+// evaluates an assign statement by evaluating the value and setting it in the environment.
 func evalAssignStatement(stmt *ast.AssignStatement, env *object.Environment) object.Object {
 	// First evaluate the value to be assigned
 	val := Eval(stmt.Value, env)
@@ -151,6 +153,7 @@ func evalAssignStatement(stmt *ast.AssignStatement, env *object.Environment) obj
 	return env.Set(stmt.Name.Value, val)
 }
 
+// evaluates an if expression by evaluating the condition and then the consequence or alternative.
 func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
 	condition := Eval(ie.Condition, env)
 	if isError(condition) {
@@ -219,6 +222,7 @@ func evalBlockStatement(block *ast.BlockStatement, env *object.Environment) obje
 	return result
 }
 
+// the print statement is evaluated by evaluating the expression and printing its value.
 func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.Object {
 	if ps == nil || ps.Expression == nil {
 		return newError("invalid print statement")
@@ -226,20 +230,23 @@ func evalPrintStatement(ps *ast.PrintStatement, env *object.Environment) object.
 
 	value := Eval(ps.Expression, env)
 	if value == nil {
-		return newError("cannot print nil value")
+		return newError("kya coder banega re tu!! Print karana bhi nahi seekha!!")
 	}
 
 	if value.Type() == object.ERROR_OBJ {
 		return value
 	}
 
-	// Keep adding the ouput to the Output' Builder string
+	// Keep adding the ouput to the Output' Builder string -- can be handled better
 	env.OutputBuilder.WriteString(value.Inspect())
 	env.OutputBuilder.WriteString("\n")
 
 	return value
 }
 
+// -------All about loops and blocked scopes-------
+
+// To prevent infinite loops and server loads
 const maxIterations = 10000
 
 type LoopControlFlow int
@@ -258,6 +265,7 @@ func evalContinueStatement() object.Object {
 	return &object.ContinueControl{}
 }
 
+// evaluate for-expressions (loops)
 func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Object {
 	loopEnv := object.NewEnclosedEnvironment(env)
 	iterations := 0
@@ -274,7 +282,7 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 	for {
 		iterations++
 		if iterations > maxIterations {
-			return newError("Infinite loop detected! Check your loop condition.")
+			return newError("Mere server ka bill tera BAAP bharega ? Itni badi loop chala raha h!!")
 		}
 
 		if fe.Condition != nil {
@@ -322,7 +330,7 @@ func evalForExpression(fe *ast.ForExpression, env *object.Environment) object.Ob
 	return result
 }
 
-// evaluate while expressions
+// evaluate while-expressions (loops)
 func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) object.Object {
 	loopEnv := object.NewEnclosedEnvironment(env)
 	var result object.Object = NULL
@@ -331,7 +339,7 @@ func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) objec
 	for {
 		iterations++
 		if iterations > maxIterations {
-			return newError("Infinite loop detected! Check your loop condition.")
+			return newError("Mere server ka bill tera BAAP bharega ? Itni badi loop chala raha h!!")
 		}
 
 		condition := Eval(we.Condition, loopEnv)
@@ -365,6 +373,9 @@ func evalWhileExpression(we *ast.WhileExpression, env *object.Environment) objec
 	return result
 }
 
+// -------About Arrays and Indexing-------
+
+// evaluates an array literal by evaluating each element.
 func evalArrayLiteral(node *ast.ArrayLiteral, env *object.Environment) object.Object {
 	elements := evalExpressions(node.Elements, env)
 
@@ -389,15 +400,17 @@ func evalArrayLiteral(node *ast.ArrayLiteral, env *object.Environment) object.Ob
 	return &object.Array{Elements: elements}
 }
 
+// evaluates an index expression by evaluating the left and index expressions.
 func evalIndexExpression(left, index object.Object) object.Object {
 	switch {
 	case left.Type() == object.ARRAY_OBJ:
 		return evalArrayIndexExpression(left, index)
 	default:
-		return newError("Index operator not supported: %s", left.Type())
+		return newError("Kya coder banega re tu!! Sabse basic data structure bhi nahi aata tujhe!!: %s", left.Type())
 	}
 }
 
+// evaluates an array index expression by checking if the index is within bounds.
 func evalArrayIndexExpression(array, index object.Object) object.Object {
 	arrayObject := array.(*object.Array)
 	idx, ok := index.(*object.Integer)
@@ -412,6 +425,7 @@ func evalArrayIndexExpression(array, index object.Object) object.Object {
 	return arrayObject.Elements[idx.Value]
 }
 
+// evaluates a list of expressions.
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
 	var result []object.Object
 
@@ -438,15 +452,19 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 	return newError("Abe hosh me rehle! %s kaha likha h tune bataiyo zara...", node.Value)
 }
 
+// -------Infix Expressions-------
+
+// evaluates an infix expression by evaluating the left and right expressions.
 func evalInfixExpression(operator string, left, right object.Object) object.Object {
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
 	default:
-		return newError("%s, '%s', aur %s ka sambandh nahi ban sakta!!", left.Type(), operator, right.Type())
+		return newError("Bete %s, '%s', aur %s ka sambandh nahi ban sakta!!", left.Type(), operator, right.Type())
 	}
 }
 
+// evaluates an integer infix expression.
 func evalIntegerInfixExpression(operator string, left, right object.Object) object.Object {
 	leftVal := left.(*object.Integer).Value
 	rightVal := right.(*object.Integer).Value
@@ -479,7 +497,7 @@ func evalIntegerInfixExpression(operator string, left, right object.Object) obje
 	}
 }
 
-// Helper functions for error handling and truthiness.
+// -------Helper functions for error handling and truthiness-------
 
 func isError(obj object.Object) bool {
 	if obj == nil {

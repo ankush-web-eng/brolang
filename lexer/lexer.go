@@ -25,6 +25,7 @@ func (l *Lexer) readChar() {
 	l.readPosition += 1
 }
 
+// NextToken returns the next token in the input string
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -106,12 +107,14 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
+// skipWhitespace skips over any whitespace characters in the input
 func (l *Lexer) skipWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
 	}
 }
 
+// readIdentifier reads in an identifier and advances the lexer's position
 func (l *Lexer) readIdentifier() string {
 	position := l.position
 	for isLetter(l.ch) || isDigit(l.ch) || l.ch == '_' {
@@ -120,6 +123,7 @@ func (l *Lexer) readIdentifier() string {
 	return l.input[position:l.position]
 }
 
+// readNumber reads in a number and advances the lexer's position
 func (l *Lexer) readNumber() string {
 	position := l.position
 	for isDigit(l.ch) {
@@ -128,6 +132,7 @@ func (l *Lexer) readNumber() string {
 	return l.input[position:l.position]
 }
 
+// readString reads in a string and advances the lexer's position
 func (l *Lexer) readString() string {
 	l.readChar() // skip opening quote
 	position := l.position
@@ -139,6 +144,7 @@ func (l *Lexer) readString() string {
 	return str
 }
 
+// peekChar returns the next character in the input without advancing the lexer's position
 func (l *Lexer) peekChar() byte {
 	if l.readPosition >= len(l.input) {
 		return 0
@@ -146,10 +152,12 @@ func (l *Lexer) peekChar() byte {
 	return l.input[l.readPosition]
 }
 
+// isLetter returns true if the character is a letter
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z'
 }
 
+// isDigit returns true if the character is a digit
 func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
 }
