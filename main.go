@@ -7,9 +7,17 @@ import (
 	"github.com/ankush-web-eng/brolang/object"
 )
 
+type Input struct {
+	Name string
+}
+
 func main() {
 	env := object.NewEnvironment()
 	handler.SetGlobalEnvironment(env)
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello World"))
+	})
 
 	http.HandleFunc("/compile", corsMiddleware(handler.CompilerHandler))
 	http.ListenAndServe(":8080", nil)
