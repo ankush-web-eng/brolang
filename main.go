@@ -26,7 +26,7 @@ func main() {
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin == "http://localhost:3000" || origin == "https://brolang.ankushsingh.tech" {
+		if origin == "http://localhost:3000" || origin == "https://brolang.whyankush.wtf" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
